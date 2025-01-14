@@ -3,7 +3,6 @@ import Description from "./components/Description";
 import Maps from "./components/Maps";
 // import './App.css'
 import "leaflet/dist/leaflet.css";
-import Maps2 from "./components/Maps2";
 
 function App() {
   return (

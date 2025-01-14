@@ -6,7 +6,7 @@ import { GeoJSON, useMap } from "react-leaflet";
 
 const HeatMap = () => {
   const map = useMap();
-  const { reset, setState, setDensity } = useDensityStore();
+  const { reset, setState, setDensity, setMarkerCount } = useDensityStore();
 
   const getColor = (d: number) => {
     return d > 1000
@@ -58,6 +58,7 @@ const HeatMap = () => {
       mouseover: (e: LeafletMouseEvent) => {
         setState(feature.properties?.name);
         setDensity(feature.properties?.density);
+        setMarkerCount(feature.properties?.markerCount);
         e.target.setStyle({
           fillColor: getColorDarker(feature.properties?.density),
         });

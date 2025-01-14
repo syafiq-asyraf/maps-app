@@ -1,6 +1,7 @@
 import { LatLngExpression } from "leaflet";
 import { MapContainer, TileLayer } from "react-leaflet";
 import HeatMap from "./HeatMap";
+import LocationMarker from "./LocationMarker";
 
 const Maps = () => {
   const center: LatLngExpression = [39.74780559892203, -101.41401515583752];
@@ -16,6 +17,7 @@ const Maps = () => {
         attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
       />
       <HeatMap />
+      <LocationMarker />
       {/* <Marker position={center}></Marker> */}
     </MapContainer>
   );
