@@ -1,4 +1,5 @@
 import { statesData } from "@/data/us-states";
+import useDataStore from "@/dataStore";
 import { Box, Button, Text } from "@chakra-ui/react";
 import {
   booleanPointInPolygon,
@@ -22,8 +23,10 @@ const LocationMarker = () => {
   const [position, setPosition] = useState(map.getCenter());
   const [isShow, setShow] = useState(false);
 
-  const [geoJSONData, setgeoJSONData] = useState(statesData);
-  const [marked, setMarked] = useState("");
+  const { data, setData } = useDataStore();
+
+  // const [geoJSONData, setgeoJSONData] = useState(statesData);
+  // const [marked, setMarked] = useState("");
   // console.log(marked);
 
   map.on({
@@ -38,45 +41,42 @@ const LocationMarker = () => {
     setShow(false);
   };
 
-  const updateFeature = (featureId: string | number | undefined) => {
-    console.log("Updating feature with ID:", featureId); // Debugging log
-    setgeoJSONData((prevData) => {
-      const updatedFeatures = prevData.features.map((feature) =>
-        feature.id === featureId
-          ? {
-              ...feature,
-              properties: {
-                ...feature.properties, // Ensure properties are spread correctly
-                markerCount: 5,
-              },
-            }
-          : feature
-      );
+  // const updateFeature = (featureId: string | number | undefined) => {
+  //   console.log("Updating feature with ID:", featureId); // Debugging log
+  //   setgeoJSONData((prevData) => {
+  //     const updatedFeatures = prevData.features.map((feature) =>
+  //       feature.id === featureId
+  //         ? {
+  //             ...feature,
+  //             properties: {
+  //               ...feature.properties, // Ensure properties are spread correctly
+  //               markerCount: feature.properties?.markerCount + 1,
+  //             },
+  //           }
+  //         : feature
+  //     );
 
-      console.log(updatedFeatures);
+  //     console.log(updatedFeatures);
 
-      const newData = {
-        ...prevData,
-        features: updatedFeatures,
-      };
+  //     const newData = {
+  //       ...prevData,
+  //       features: updatedFeatures,
+  //     };
 
-      console.log("Updated geoJSONData:", newData); // Debugging log
-      return newData;
-    });
-    console.log(geoJSONData);
-  };
+  //     console.log("Updated geoJSONData:", newData); // Debugging log
+  //     return newData;
+  //   });
+  //   console.log(geoJSONData);
+  // };
 
   const isMarkerInsideGeoJSON = () => {
     const mark = point([position.lng, position.lat]);
 
-    for (const feature of geoJSONData.features) {
+    for (const feature of data.features) {
       if (feature.geometry.type === "Polygon") {
         const poly = polygon(feature.geometry.coordinates as Position[][]);
         if (booleanPointInPolygon(mark, poly)) {
-          updateFeature(feature.id);
-          setMarked(feature.properties?.name);
-          console.log(feature.properties?.name);
-          console.log(geoJSONData);
+          setData(feature.id);
           return;
         }
       } else if (feature.geometry.type === "MultiPolygon") {
@@ -84,10 +84,7 @@ const LocationMarker = () => {
           feature.geometry.coordinates as Position[][][]
         );
         if (booleanPointInPolygon(mark, poly)) {
-          updateFeature(feature.id);
-          setMarked(feature.properties?.name);
-          console.log(feature.properties?.name);
-          console.log(geoJSONData);
+          setData(feature.id);
           return;
         }
       }
