@@ -5,40 +5,41 @@ import { statesData } from "./data/us-states";
 interface DataStore {
   data: FeatureCollection;
   key: number;
-  setData: (featureId: string | number | undefined) => void;
+  // setData: (featureId: string | number | undefined) => void;
+  setData: (data: FeatureCollection) => void;
 }
 
 const useDataStore = create<DataStore>((set) => ({
   data: statesData,
   key: Date.now(),
-  setData: (id) =>
-    set((store) => ({
-      data: updateFeature(store.data, id),
+  setData: (data) =>
+    set(() => ({
+      data: data,
       key: Date.now(),
     })),
 }));
 
-const updateFeature = (
-  prevData: FeatureCollection,
-  featureId: string | number | undefined
-) => {
-  const updatedFeatures = prevData.features.map((feature) =>
-    feature.id === featureId
-      ? {
-          ...feature,
-          properties: {
-            ...feature.properties, // Ensure properties are spread correctly
-            markerCount: feature.properties?.markerCount + 1,
-          },
-        }
-      : feature
-  );
+// const updateFeature = (
+//   prevData: FeatureCollection,
+//   featureId: string | number | undefined
+// ) => {
+//   const updatedFeatures = prevData.features.map((feature) =>
+//     feature.id === featureId
+//       ? {
+//           ...feature,
+//           properties: {
+//             ...feature.properties, // Ensure properties are spread correctly
+//             markerCount: feature.properties?.markerCount + 1,
+//           },
+//         }
+//       : feature
+//   );
 
-  const newData = {
-    ...prevData,
-    features: updatedFeatures,
-  };
-  return newData;
-};
+//   const newData = {
+//     ...prevData,
+//     features: updatedFeatures,
+//   };
+//   return newData;
+// };
 
 export default useDataStore;

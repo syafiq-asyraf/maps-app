@@ -76,7 +76,7 @@ const LocationMarker = () => {
       if (feature.geometry.type === "Polygon") {
         const poly = polygon(feature.geometry.coordinates as Position[][]);
         if (booleanPointInPolygon(mark, poly)) {
-          setData(feature.id);
+          // setData(feature.id);
           return;
         }
       } else if (feature.geometry.type === "MultiPolygon") {
@@ -84,7 +84,7 @@ const LocationMarker = () => {
           feature.geometry.coordinates as Position[][][]
         );
         if (booleanPointInPolygon(mark, poly)) {
-          setData(feature.id);
+          // setData(feature.id);
           return;
         }
       }

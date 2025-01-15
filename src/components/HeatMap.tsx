@@ -59,7 +59,7 @@ const HeatMap = () => {
     layer.on({
       mouseover: (e: LeafletMouseEvent) => {
         setState(feature.properties?.name);
-        setDensity(feature.properties?.density);
+        setDensity(0);
         setMarkerCount(feature.properties?.markerCount);
         e.target.setStyle({
           fillColor: getColorDarker(feature.properties?.markerCount),
