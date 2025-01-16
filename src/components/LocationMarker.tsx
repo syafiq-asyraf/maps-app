@@ -1,12 +1,14 @@
 import { statesData } from "@/data/us-states";
 import useDataStore from "@/dataStore";
 import { Box, Button, Text } from "@chakra-ui/react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   booleanPointInPolygon,
   multiPolygon,
   point,
   polygon,
 } from "@turf/turf";
+import axios from "axios";
 import { FeatureCollection, Position } from "geojson";
 import { icon, LatLngExpression } from "leaflet";
 import { useState } from "react";
@@ -24,6 +26,18 @@ const LocationMarker = () => {
   const [isShow, setShow] = useState(false);
 
   const { data, setData } = useDataStore();
+
+  const queryClient = useQueryClient();
+
+  const addMark = useMutation({
+    mutationFn: () =>
+      axios.post("http://localhost:5050/api/geodata/3").then((res) => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["maps"],
+      });
+    },
+  });
 
   // const [geoJSONData, setgeoJSONData] = useState(statesData);
   // const [marked, setMarked] = useState("");
@@ -72,11 +86,13 @@ const LocationMarker = () => {
   const isMarkerInsideGeoJSON = () => {
     const mark = point([position.lng, position.lat]);
 
+    console.log(data);
+    if (!data) return null;
     for (const feature of data.features) {
       if (feature.geometry.type === "Polygon") {
         const poly = polygon(feature.geometry.coordinates as Position[][]);
         if (booleanPointInPolygon(mark, poly)) {
-          // setData(feature.id);
+          console.log(feature.properties?.name);
           return;
         }
       } else if (feature.geometry.type === "MultiPolygon") {
@@ -84,7 +100,8 @@ const LocationMarker = () => {
           feature.geometry.coordinates as Position[][][]
         );
         if (booleanPointInPolygon(mark, poly)) {
-          // setData(feature.id);
+          console.log(feature.properties?.name);
+          addMark.mutate();
           return;
         }
       }

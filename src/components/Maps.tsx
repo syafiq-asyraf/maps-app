@@ -2,10 +2,10 @@ import { LatLngExpression } from "leaflet";
 import { MapContainer, TileLayer } from "react-leaflet";
 import HeatMap from "./HeatMap";
 import LocationMarker from "./LocationMarker";
+import { useQuery } from "@tanstack/react-query";
 
 const Maps = () => {
   const center: LatLngExpression = [39.74780559892203, -101.41401515583752];
-
   return (
     <MapContainer
       center={center}

@@ -1,14 +1,22 @@
 import useDataStore from "@/dataStore";
+import useMaps from "@/hooks/useMaps";
 import useDensityStore from "@/store";
-import { Feature } from "geojson";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { Feature, FeatureCollection } from "geojson";
 import { Layer, LeafletEvent, LeafletMouseEvent, Path } from "leaflet";
+import { useEffect } from "react";
 import { GeoJSON, useMap } from "react-leaflet";
 
 const HeatMap = () => {
   const map = useMap();
   const { reset, setState, setDensity, setMarkerCount, markerCount } =
     useDensityStore();
-  const { data, key } = useDataStore();
+  const { data: storedData, setData } = useDataStore();
+
+  const { data, dataUpdatedAt, isSuccess } = useMaps();
+
+  // if (isSuccess) setData(storedData);
 
   const getColor = (d: number) => {
     return d > 50
@@ -76,7 +84,13 @@ const HeatMap = () => {
     });
   };
 
-  return <GeoJSON key={key} data={data} onEachFeature={onEachFeature} />;
+  return (
+    <GeoJSON
+      key={dataUpdatedAt}
+      data={data as FeatureCollection}
+      onEachFeature={onEachFeature}
+    />
+  );
 };
 
 export default HeatMap;

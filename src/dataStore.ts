@@ -1,6 +1,7 @@
 import { FeatureCollection } from "geojson";
 import { create } from "zustand";
 import { statesData } from "./data/us-states";
+import useMaps from "./hooks/useMaps";
 
 interface DataStore {
   data: FeatureCollection;
@@ -9,8 +10,10 @@ interface DataStore {
   setData: (data: FeatureCollection) => void;
 }
 
+const { data, dataUpdatedAt, isSuccess } = useMaps();
+
 const useDataStore = create<DataStore>((set) => ({
-  data: statesData,
+  data: data,
   key: Date.now(),
   setData: (data) =>
     set(() => ({

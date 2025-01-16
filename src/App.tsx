@@ -9,13 +9,13 @@ import useDataStore from "./dataStore";
 import { FeatureCollection } from "geojson";
 
 function App() {
-  const { setData } = useDataStore();
+  // const { setData } = useDataStore();
 
-  useEffect(() => {
-    axios
-      .get("http://localhost:5050/api/geodata")
-      .then((res) => setData(res.data as FeatureCollection));
-  }, []);
+  // useEffect(() => {
+  //   axios
+  //     .get("http://localhost:5050/api/geodata")
+  //     .then((res) => setData(res.data as FeatureCollection));
+  // }, []);
 
   return (
     <>
