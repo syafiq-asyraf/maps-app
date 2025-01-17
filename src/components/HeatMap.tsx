@@ -8,13 +8,18 @@ import { Layer, LeafletEvent, LeafletMouseEvent, Path } from "leaflet";
 import { useEffect } from "react";
 import { GeoJSON, useMap } from "react-leaflet";
 
-const HeatMap = () => {
+interface Props {
+  data: FeatureCollection;
+  dataUpdatedAt: number;
+}
+
+const HeatMap = ({ data, dataUpdatedAt }: Props) => {
   const map = useMap();
   const { reset, setState, setDensity, setMarkerCount, markerCount } =
     useDensityStore();
-  const { data: storedData, setData } = useDataStore();
+  // const { data: storedData, setData } = useDataStore();
 
-  const { data, dataUpdatedAt, isSuccess } = useMaps();
+  // const { data, dataUpdatedAt, isSuccess } = useMaps();
 
   // if (isSuccess) setData(storedData);
 

@@ -1,5 +1,6 @@
 import { statesData } from "@/data/us-states";
 import useDataStore from "@/dataStore";
+import useMarkers, { MarkerData } from "@/hooks/useMarkers";
 import { Box, Button, Text } from "@chakra-ui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -10,32 +11,95 @@ import {
 } from "@turf/turf";
 import axios from "axios";
 import { FeatureCollection, Position } from "geojson";
-import { icon, LatLngExpression } from "leaflet";
+import { icon, LatLngExpression, marker } from "leaflet";
 import { useState } from "react";
 import { Marker, useMap } from "react-leaflet";
 
-const LocationMarker = () => {
+interface Props {
+  data: FeatureCollection;
+}
+
+interface AddMapsContext {
+  previousMaps: FeatureCollection;
+}
+
+const LocationMarker = ({ data }: Props) => {
   const map = useMap();
-  const [markers, setMarker] = useState<{
-    data: { position: [number, number] }[];
-  }>({
-    data: [],
-  });
+  // const [markers, setMarker] = useState<{
+  //   data: { position: [number, number] }[];
+  // }>({
+  //   data: [],
+  // });
 
   const [position, setPosition] = useState(map.getCenter());
   const [isShow, setShow] = useState(false);
 
-  const { data, setData } = useDataStore();
+  const { data: markers } = useMarkers();
 
   const queryClient = useQueryClient();
 
-  const addMark = useMutation({
-    mutationFn: () =>
-      axios.post("http://localhost:5050/api/geodata/3").then((res) => res.data),
+  const addMarker = useMutation<MarkerData, Error, MarkerData>({
+    mutationFn: (marker: MarkerData) =>
+      axios
+        .post("http://localhost:5050/api/marker/addMarker", marker)
+        .then((res) => res.data),
+    onMutate: (newMarker: MarkerData) => {
+      queryClient.setQueryData<MarkerData[]>(["markers"], (markers) => [
+        ...(markers || []),
+        newMarker,
+      ]);
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: ["markers"],
+      }),
+  });
+
+  const addMarkerCount = useMutation<
+    FeatureCollection,
+    Error,
+    number,
+    AddMapsContext
+  >({
+    mutationFn: (id: number) =>
+      axios
+        .post(`http://localhost:5050/api/geodata/${id}/updateMarkerCount`)
+        .then((res) => res.data),
+    onMutate: (id: number) => {
+      const previousMaps = queryClient.getQueryData<FeatureCollection>([
+        "maps",
+      ]) || { type: "FeatureCollection", features: [] };
+
+      queryClient.setQueryData<FeatureCollection>(["maps"], (maps) => {
+        const updatedFeatures = maps?.features.map((feature) =>
+          feature.id === id
+            ? {
+                ...feature,
+                properties: {
+                  ...feature.properties,
+                  markerCount: feature.properties?.markerCount + 1,
+                },
+              }
+            : feature
+        );
+
+        const newData: FeatureCollection = {
+          ...(maps as FeatureCollection),
+          features: updatedFeatures || [],
+        };
+        return newData;
+      });
+
+      return { previousMaps };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["maps"],
       });
+    },
+    onError: (error, variable, context) => {
+      if (!context) return;
+      queryClient.setQueryData(["maps"], context.previousMaps);
     },
   });
 
@@ -49,50 +113,28 @@ const LocationMarker = () => {
 
   const handleClick = () => {
     isMarkerInsideGeoJSON();
-    setMarker({
-      data: [...markers.data, { position: [position.lat, position.lng] }],
-    });
+    // setMarker({
+    //   data: [...markers.data, { position: [position.lat, position.lng] }],
+    // });
     setShow(false);
   };
-
-  // const updateFeature = (featureId: string | number | undefined) => {
-  //   console.log("Updating feature with ID:", featureId); // Debugging log
-  //   setgeoJSONData((prevData) => {
-  //     const updatedFeatures = prevData.features.map((feature) =>
-  //       feature.id === featureId
-  //         ? {
-  //             ...feature,
-  //             properties: {
-  //               ...feature.properties, // Ensure properties are spread correctly
-  //               markerCount: feature.properties?.markerCount + 1,
-  //             },
-  //           }
-  //         : feature
-  //     );
-
-  //     console.log(updatedFeatures);
-
-  //     const newData = {
-  //       ...prevData,
-  //       features: updatedFeatures,
-  //     };
-
-  //     console.log("Updated geoJSONData:", newData); // Debugging log
-  //     return newData;
-  //   });
-  //   console.log(geoJSONData);
-  // };
 
   const isMarkerInsideGeoJSON = () => {
     const mark = point([position.lng, position.lat]);
 
-    console.log(data);
+    // console.log(data);
     if (!data) return null;
     for (const feature of data.features) {
       if (feature.geometry.type === "Polygon") {
         const poly = polygon(feature.geometry.coordinates as Position[][]);
         if (booleanPointInPolygon(mark, poly)) {
-          console.log(feature.properties?.name);
+          // console.log(feature.properties?.name);
+          addMarker.mutate({
+            lat: position.lat,
+            lng: position.lng,
+            parentId: feature.id as number,
+          });
+          addMarkerCount.mutate(feature.id as number);
           return;
         }
       } else if (feature.geometry.type === "MultiPolygon") {
@@ -100,8 +142,8 @@ const LocationMarker = () => {
           feature.geometry.coordinates as Position[][][]
         );
         if (booleanPointInPolygon(mark, poly)) {
-          console.log(feature.properties?.name);
-          addMark.mutate();
+          // console.log(feature.properties?.name);
+          addMarkerCount.mutate(feature.id as number);
           return;
         }
       }
@@ -111,10 +153,10 @@ const LocationMarker = () => {
 
   return (
     <>
-      {markers.data.map((marker, index) => (
+      {markers?.map((marker, index) => (
         <Marker
           key={index}
-          position={marker.position as LatLngExpression}
+          position={{ lat: marker.lat, lng: marker.lng }}
           icon={icon({
             iconUrl: "https://cdn-icons-png.flaticon.com/512/252/252025.png",
             iconSize: [30, 30],
