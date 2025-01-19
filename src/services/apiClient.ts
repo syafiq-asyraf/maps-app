@@ -13,8 +13,14 @@ class APIClient<T> {
 
   getAll = () => axiosInstance.get<T>(this.endpoint).then((res) => res.data);
 
-  post = (data: T) => {
+  post = (data?: T) => {
     return axiosInstance.post<T>(this.endpoint, data).then((res) => res.data);
+  };
+
+  postWithSubEndpoint = (subEndpoint: string, data?: T) => {
+    return axiosInstance
+      .post<T>(`${this.endpoint}/${subEndpoint}`, data)
+      .then((res) => res.data);
   };
 }
 

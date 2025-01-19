@@ -3,10 +3,6 @@ import Description from "./components/Description";
 import Maps from "./components/Maps";
 // import './App.css'
 import "leaflet/dist/leaflet.css";
-import { useEffect } from "react";
-import axios from "axios";
-import useDataStore from "./dataStore";
-import { FeatureCollection } from "geojson";
 
 function App() {
   // const { setData } = useDataStore();
@@ -23,7 +19,10 @@ function App() {
         <Description />
       </Box>
       {/* <Description /> */}
+      {/* <Maps /> */}
+      {/* <Box position={"relative"} height={"400px"} width={"400px"} margin={10}> */}
       <Maps />
+      {/* </Box> */}
     </>
   );
 }

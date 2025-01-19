@@ -1,7 +1,5 @@
-import { statesData } from "@/data/us-states";
-import useDataStore from "@/dataStore";
 import useMarkers, { MarkerData } from "@/hooks/useMarkers";
-import { Box, Button, Text } from "@chakra-ui/react";
+import { Box, Button, Image, Text } from "@chakra-ui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   booleanPointInPolygon,
@@ -11,19 +9,20 @@ import {
 } from "@turf/turf";
 import axios from "axios";
 import { FeatureCollection, Position } from "geojson";
-import { icon, LatLngExpression, marker } from "leaflet";
+import { icon, latLng, LatLngExpression } from "leaflet";
 import { useState } from "react";
-import { Marker, useMap } from "react-leaflet";
+import { Marker, Popup, useMap } from "react-leaflet";
+import redMarker from "../assets/marker-red.webp";
+import greenMarker from "../assets/marker-green.webp";
+import useAddMarker from "@/hooks/useAddMarker";
+import useAddMarkerCount from "@/hooks/useAddMarkerCount";
 
 interface Props {
   data: FeatureCollection;
+  center: LatLngExpression;
 }
 
-interface AddMapsContext {
-  previousMaps: FeatureCollection;
-}
-
-const LocationMarker = ({ data }: Props) => {
+const LocationMarker = ({ data, center }: Props) => {
   const map = useMap();
   // const [markers, setMarker] = useState<{
   //   data: { position: [number, number] }[];
@@ -33,79 +32,14 @@ const LocationMarker = ({ data }: Props) => {
 
   const [position, setPosition] = useState(map.getCenter());
   const [isShow, setShow] = useState(false);
+  // const [isEdit, setEdit] = useState(false);
+  const [selected, setSelected] = useState(0);
 
   const { data: markers } = useMarkers();
 
-  const queryClient = useQueryClient();
+  const addMarker = useAddMarker();
 
-  const addMarker = useMutation<MarkerData, Error, MarkerData>({
-    mutationFn: (marker: MarkerData) =>
-      axios
-        .post("http://localhost:5050/api/marker/addMarker", marker)
-        .then((res) => res.data),
-    onMutate: (newMarker: MarkerData) => {
-      queryClient.setQueryData<MarkerData[]>(["markers"], (markers) => [
-        ...(markers || []),
-        newMarker,
-      ]);
-    },
-    onSuccess: () =>
-      queryClient.invalidateQueries({
-        queryKey: ["markers"],
-      }),
-  });
-
-  const addMarkerCount = useMutation<
-    FeatureCollection,
-    Error,
-    number,
-    AddMapsContext
-  >({
-    mutationFn: (id: number) =>
-      axios
-        .post(`http://localhost:5050/api/geodata/${id}/updateMarkerCount`)
-        .then((res) => res.data),
-    onMutate: (id: number) => {
-      const previousMaps = queryClient.getQueryData<FeatureCollection>([
-        "maps",
-      ]) || { type: "FeatureCollection", features: [] };
-
-      queryClient.setQueryData<FeatureCollection>(["maps"], (maps) => {
-        const updatedFeatures = maps?.features.map((feature) =>
-          feature.id === id
-            ? {
-                ...feature,
-                properties: {
-                  ...feature.properties,
-                  markerCount: feature.properties?.markerCount + 1,
-                },
-              }
-            : feature
-        );
-
-        const newData: FeatureCollection = {
-          ...(maps as FeatureCollection),
-          features: updatedFeatures || [],
-        };
-        return newData;
-      });
-
-      return { previousMaps };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["maps"],
-      });
-    },
-    onError: (error, variable, context) => {
-      if (!context) return;
-      queryClient.setQueryData(["maps"], context.previousMaps);
-    },
-  });
-
-  // const [geoJSONData, setgeoJSONData] = useState(statesData);
-  // const [marked, setMarked] = useState("");
-  // console.log(marked);
+  const addMarkerCount = useAddMarkerCount();
 
   map.on({
     move: () => setPosition(map.getCenter()),
@@ -113,10 +47,8 @@ const LocationMarker = ({ data }: Props) => {
 
   const handleClick = () => {
     isMarkerInsideGeoJSON();
-    // setMarker({
-    //   data: [...markers.data, { position: [position.lat, position.lng] }],
-    // });
     setShow(false);
+    setSelected(0);
   };
 
   const isMarkerInsideGeoJSON = () => {
@@ -142,7 +74,11 @@ const LocationMarker = ({ data }: Props) => {
           feature.geometry.coordinates as Position[][][]
         );
         if (booleanPointInPolygon(mark, poly)) {
-          // console.log(feature.properties?.name);
+          addMarker.mutate({
+            lat: position.lat,
+            lng: position.lng,
+            parentId: feature.id as number,
+          });
           addMarkerCount.mutate(feature.id as number);
           return;
         }
@@ -151,20 +87,58 @@ const LocationMarker = ({ data }: Props) => {
     return null;
   };
 
+  const toggleEdit = (coordinate: LatLngExpression, id: number) => {
+    // setEdit(true);
+    // map.closePopup();
+    const onMoveEnd = () => {
+      setSelected(id);
+      setShow(true);
+      map.closePopup();
+      map.off("moveend", onMoveEnd);
+    };
+    map.on({
+      moveend: onMoveEnd,
+    });
+    map.flyTo(coordinate);
+    // setShow(true);
+  };
+
   return (
     <>
-      {markers?.map((marker, index) => (
-        <Marker
-          key={index}
-          position={{ lat: marker.lat, lng: marker.lng }}
-          icon={icon({
-            iconUrl: "https://cdn-icons-png.flaticon.com/512/252/252025.png",
-            iconSize: [30, 30],
-            iconAnchor: [15, 30],
-            popupAnchor: [0, -30],
-          })}
-        ></Marker>
-      ))}
+      {markers?.map((marker, index) =>
+        marker.id === selected ? (
+          ""
+        ) : (
+          <Marker
+            key={index}
+            position={{ lat: marker.lat, lng: marker.lng }}
+            icon={icon({
+              iconUrl: redMarker,
+              iconSize: [30, 30],
+              iconAnchor: [15, 30],
+              popupAnchor: [0, -30],
+            })}
+            eventHandlers={{
+              click: () => {
+                setShow(false);
+                setSelected(0);
+              },
+            }}
+          >
+            <Popup minWidth={90}>
+              <Text
+                cursor={"pointer"}
+                onClick={() =>
+                  toggleEdit(latLng([marker.lat, marker.lng]), marker.id!)
+                }
+              >
+                Click here to Edit
+              </Text>
+              {/* {marker.lat + "," + marker.lng} */}
+            </Popup>
+          </Marker>
+        )
+      )}
       <Box
         backgroundColor={"grey"}
         padding={2}
@@ -179,12 +153,13 @@ const LocationMarker = ({ data }: Props) => {
           {position.lat}, {position.lng}
         </Text>
         {isShow ? (
-          <Button bgColor={"green"} onClick={handleClick}>
+          <Button colorPalette={"red"} onClick={handleClick}>
             Tag
           </Button>
         ) : (
           <Button
-            bgColor={"blue"}
+            // bgColor={"blue"}
+            colorPalette={"blue"}
             onClick={() => {
               setShow(true);
             }}
@@ -192,27 +167,29 @@ const LocationMarker = ({ data }: Props) => {
             Show Marker
           </Button>
         )}
-      </Box>
-      {isShow ? (
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            zIndex: 1000,
-            pointerEvents: "none",
-            marginTop: "-15px",
+        <Button
+          colorPalette={"grey"}
+          onClick={() => {
+            map.flyTo(center);
           }}
+          marginLeft={2}
         >
-          <img
-            src="https://cdn-icons-png.flaticon.com/512/252/252025.png"
-            alt="center marker"
-            width="30"
-            height="30"
-          />
-        </div>
-      ) : null}
+          Center
+        </Button>
+      </Box>
+      {isShow && (
+        <Box
+          position={"absolute"}
+          top={"50%"}
+          left={"50%"}
+          transform={"translate(-50%, -50%)"}
+          zIndex={1000}
+          pointerEvents={"none"}
+          marginTop={"-15px"}
+        >
+          <Image src={greenMarker} alt="center marker" boxSize={30} />
+        </Box>
+      )}
     </>
   );
 };
