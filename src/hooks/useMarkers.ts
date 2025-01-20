@@ -5,7 +5,7 @@ export interface MarkerData {
   id?: number;
   lat: number;
   lng: number;
-  parentId: number;
+  parentId?: number;
 }
 
 const apiClient = new APIClient<MarkerData[]>("/marker");

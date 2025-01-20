@@ -1,11 +1,8 @@
-import useDataStore from "@/dataStore";
-import useMaps from "@/hooks/useMaps";
+import { MarkerData } from "@/hooks/useMarkers";
 import useDensityStore from "@/store";
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import { useQueryClient } from "@tanstack/react-query";
 import { Feature, FeatureCollection } from "geojson";
-import { Layer, LeafletEvent, LeafletMouseEvent, Path } from "leaflet";
-import { useEffect } from "react";
+import { Layer, LeafletEvent, LeafletMouseEvent, marker, Path } from "leaflet";
 import { GeoJSON, useMap } from "react-leaflet";
 
 interface Props {
@@ -15,13 +12,7 @@ interface Props {
 
 const HeatMap = ({ data, dataUpdatedAt }: Props) => {
   const map = useMap();
-  const { reset, setState, setDensity, setMarkerCount, markerCount } =
-    useDensityStore();
-  // const { data: storedData, setData } = useDataStore();
-
-  // const { data, dataUpdatedAt, isSuccess } = useMaps();
-
-  // if (isSuccess) setData(storedData);
+  const { reset, setState, setMarkerCount } = useDensityStore();
 
   const getColor = (d: number) => {
     return d > 50
@@ -59,9 +50,19 @@ const HeatMap = ({ data, dataUpdatedAt }: Props) => {
       : "#A69A68";
   };
 
+  const queryClient = useQueryClient();
+
+  const getMarkerCount = (id: number) => {
+    const markers = queryClient.getQueryData<MarkerData[]>(["markers"]) || [];
+    const markerCount = markers.reduce((acc, marker) => {
+      return (marker.parentId as number) === id ? acc + 1 : acc;
+    }, 0);
+    return markerCount;
+  };
+
   const onEachFeature = (feature: Feature, layer: Layer) => {
     (layer as Path).setStyle({
-      fillColor: getColor(feature.properties?.markerCount),
+      fillColor: getColor(getMarkerCount(feature.id as number)),
       fillOpacity: 0.7,
       dashArray: "3, 3",
       color: "white",
@@ -72,10 +73,9 @@ const HeatMap = ({ data, dataUpdatedAt }: Props) => {
     layer.on({
       mouseover: (e: LeafletMouseEvent) => {
         setState(feature.properties?.name);
-        setDensity(0);
-        setMarkerCount(feature.properties?.markerCount);
+        setMarkerCount(getMarkerCount(feature.id as number));
         e.target.setStyle({
-          fillColor: getColorDarker(feature.properties?.markerCount),
+          fillColor: getColorDarker(getMarkerCount(feature.id as number)),
         });
       },
       mouseout: (e: LeafletMouseEvent) => {

@@ -4,16 +4,13 @@ import { statesData } from "./data/us-states";
 import useMaps from "./hooks/useMaps";
 
 interface DataStore {
-  data: FeatureCollection | null;
+  data: FeatureCollection | undefined;
   key: number;
   // setData: (featureId: string | number | undefined) => void;
   setData: (data: FeatureCollection) => void;
 }
-
-// const { data, dataUpdatedAt, isSuccess } = useMaps();
-
 const useDataStore = create<DataStore>((set) => ({
-  data: null,
+  data: undefined,
   key: Date.now(),
   setData: (data) =>
     set(() => ({

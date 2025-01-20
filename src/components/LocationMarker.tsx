@@ -1,5 +1,5 @@
 import useMarkers, { MarkerData } from "@/hooks/useMarkers";
-import { Box, Button, Image, Text } from "@chakra-ui/react";
+import { Box, Button, Image, Link, Text } from "@chakra-ui/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   booleanPointInPolygon,
@@ -15,7 +15,8 @@ import { Marker, Popup, useMap } from "react-leaflet";
 import redMarker from "../assets/marker-red.webp";
 import greenMarker from "../assets/marker-green.webp";
 import useAddMarker from "@/hooks/useAddMarker";
-import useAddMarkerCount from "@/hooks/useAddMarkerCount";
+import useUpdateMarker from "@/hooks/useUpdateMarker";
+import useDeleteMarker from "@/hooks/useDeleteMarker";
 
 interface Props {
   data: FeatureCollection;
@@ -39,53 +40,13 @@ const LocationMarker = ({ data, center }: Props) => {
 
   const addMarker = useAddMarker();
 
-  const addMarkerCount = useAddMarkerCount();
+  const updateMarker = useUpdateMarker();
+
+  const deleteMarker = useDeleteMarker();
 
   map.on({
     move: () => setPosition(map.getCenter()),
   });
-
-  const handleClick = () => {
-    isMarkerInsideGeoJSON();
-    setShow(false);
-    setSelected(0);
-  };
-
-  const isMarkerInsideGeoJSON = () => {
-    const mark = point([position.lng, position.lat]);
-
-    // console.log(data);
-    if (!data) return null;
-    for (const feature of data.features) {
-      if (feature.geometry.type === "Polygon") {
-        const poly = polygon(feature.geometry.coordinates as Position[][]);
-        if (booleanPointInPolygon(mark, poly)) {
-          // console.log(feature.properties?.name);
-          addMarker.mutate({
-            lat: position.lat,
-            lng: position.lng,
-            parentId: feature.id as number,
-          });
-          addMarkerCount.mutate(feature.id as number);
-          return;
-        }
-      } else if (feature.geometry.type === "MultiPolygon") {
-        const poly = multiPolygon(
-          feature.geometry.coordinates as Position[][][]
-        );
-        if (booleanPointInPolygon(mark, poly)) {
-          addMarker.mutate({
-            lat: position.lat,
-            lng: position.lng,
-            parentId: feature.id as number,
-          });
-          addMarkerCount.mutate(feature.id as number);
-          return;
-        }
-      }
-    }
-    return null;
-  };
 
   const toggleEdit = (coordinate: LatLngExpression, id: number) => {
     // setEdit(true);
@@ -101,6 +62,75 @@ const LocationMarker = ({ data, center }: Props) => {
     });
     map.flyTo(coordinate);
     // setShow(true);
+  };
+
+  const handleTag = () => {
+    isMarkerInsideGeoJSON();
+    setShow(false);
+    setSelected(0);
+  };
+
+  const handleCancel = () => {
+    setShow(false);
+    setSelected(0);
+  };
+
+  const handleDelete = (id: number) => {
+    map.closePopup();
+    deleteMarker.mutate(id);
+  };
+
+  const isMarkerInsideGeoJSON = () => {
+    const mark = point([position.lng, position.lat]);
+
+    // console.log(data);
+    if (!data) return null;
+    for (const feature of data.features) {
+      if (feature.geometry.type === "Polygon") {
+        const poly = polygon(feature.geometry.coordinates as Position[][]);
+        if (booleanPointInPolygon(mark, poly)) {
+          if (selected === 0) {
+            addMarker.mutate({
+              lat: position.lat,
+              lng: position.lng,
+              parentId: feature.id as number,
+            });
+          } else {
+            updateMarker.mutate({
+              id: selected as number,
+              markerData: {
+                lat: position.lat,
+                lng: position.lng,
+              },
+            });
+          }
+          return;
+        }
+      } else if (feature.geometry.type === "MultiPolygon") {
+        const poly = multiPolygon(
+          feature.geometry.coordinates as Position[][][]
+        );
+        if (booleanPointInPolygon(mark, poly)) {
+          if (selected === 0) {
+            addMarker.mutate({
+              lat: position.lat,
+              lng: position.lng,
+              parentId: feature.id as number,
+            });
+          } else {
+            updateMarker.mutate({
+              id: selected as number,
+              markerData: {
+                lat: position.lat,
+                lng: position.lng,
+              },
+            });
+          }
+          return;
+        }
+      }
+    }
+    return null;
   };
 
   return (
@@ -126,14 +156,23 @@ const LocationMarker = ({ data, center }: Props) => {
             }}
           >
             <Popup minWidth={90}>
-              <Text
-                cursor={"pointer"}
+              <Button
+                size={"2xs"}
+                colorPalette={"green"}
                 onClick={() =>
                   toggleEdit(latLng([marker.lat, marker.lng]), marker.id!)
                 }
+                marginRight={1}
               >
-                Click here to Edit
-              </Text>
+                Edit
+              </Button>
+              <Button
+                size={"2xs"}
+                colorPalette={"red"}
+                onClick={() => handleDelete(marker.id!)}
+              >
+                Delete
+              </Button>
               {/* {marker.lat + "," + marker.lng} */}
             </Popup>
           </Marker>
@@ -153,9 +192,14 @@ const LocationMarker = ({ data, center }: Props) => {
           {position.lat}, {position.lng}
         </Text>
         {isShow ? (
-          <Button colorPalette={"red"} onClick={handleClick}>
-            Tag
-          </Button>
+          <>
+            <Button colorPalette={"blue"} onClick={handleTag}>
+              Tag
+            </Button>
+            <Button colorPalette={"red"} onClick={handleCancel} marginLeft={2}>
+              Cancel
+            </Button>
+          </>
         ) : (
           <Button
             // bgColor={"blue"}

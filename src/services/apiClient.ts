@@ -17,9 +17,15 @@ class APIClient<T> {
     return axiosInstance.post<T>(this.endpoint, data).then((res) => res.data);
   };
 
-  postWithSubEndpoint = (subEndpoint: string, data?: T) => {
+  put = (id: number, data: T) => {
     return axiosInstance
-      .post<T>(`${this.endpoint}/${subEndpoint}`, data)
+      .put<T>(`${this.endpoint}/${id}`, data)
+      .then((res) => res.data);
+  };
+
+  delete = (id: number) => {
+    return axiosInstance
+      .delete(`${this.endpoint}/${id}`)
       .then((res) => res.data);
   };
 }

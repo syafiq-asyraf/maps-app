@@ -4,11 +4,13 @@ import { LatLngExpression } from "leaflet";
 import { MapContainer, TileLayer } from "react-leaflet";
 import HeatMap from "./HeatMap";
 import LocationMarker from "./LocationMarker";
+import useMarkers from "@/hooks/useMarkers";
 
 const Maps = () => {
-  const { data, dataUpdatedAt } = useMaps();
+  const { data } = useMaps();
+  const { dataUpdatedAt } = useMarkers();
 
-  const center: LatLngExpression = [39.74780559892203, -101.41401515583752];
+  const center: LatLngExpression = [32.879, -86.715];
   return (
     <MapContainer
       center={center}
