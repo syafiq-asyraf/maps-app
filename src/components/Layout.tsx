@@ -10,7 +10,7 @@ const Layout = () => {
         base: `"main aside"`,
       }}
       templateColumns={{
-        base: "1fr 400px",
+        base: "1fr 500px",
       }}
     >
       <GridItem area="main" backgroundColor={"red"} position={"relative"}>

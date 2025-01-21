@@ -14,6 +14,7 @@ const Maps = () => {
 
   return (
     <MapContainer
+      preferCanvas={true}
       center={center}
       zoom={5}
       style={{ height: "100vh", width: "100%" }}

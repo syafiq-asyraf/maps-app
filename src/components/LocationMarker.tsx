@@ -1,8 +1,9 @@
 import useDeleteMarker from "@/hooks/useDeleteMarker";
-import useMarkers from "@/hooks/useMarkers";
+import { MarkerData } from "@/hooks/useMarkers";
 import useMapStore from "@/stores/mapStore";
 import useMarkerStore from "@/stores/markerStore";
 import { Box, Button, Image } from "@chakra-ui/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { icon, latLng, LatLngExpression } from "leaflet";
 import { useEffect } from "react";
 import { Marker, Popup, useMap } from "react-leaflet";
@@ -18,12 +19,13 @@ const LocationMarker = () => {
     setMapInstance(map);
   }, [mapInstance, setMapInstance]);
 
-  const { showMarker, selectedMarker, setShowMarker, setSelectedMarker } =
-    useMarkerStore();
+  const queryClient = useQueryClient();
+  const markers = queryClient.getQueryData<MarkerData[]>(["markers"]);
 
-  const { data: markers } = useMarkers();
-
-  const deleteMarker = useDeleteMarker();
+  const showMarker = useMarkerStore((s) => s.showMarker);
+  const selectedMarker = useMarkerStore((s) => s.selectedMarker);
+  const setShowMarker = useMarkerStore((s) => s.setShowMarker);
+  const setSelectedMarker = useMarkerStore((s) => s.setSelectedMarker);
 
   const toggleEdit = (coordinate: LatLngExpression, id: number) => {
     const onMoveEnd = () => {
@@ -37,6 +39,8 @@ const LocationMarker = () => {
     });
     map.flyTo(coordinate);
   };
+
+  const deleteMarker = useDeleteMarker();
 
   const handleDelete = (id: number) => {
     map.closePopup();
@@ -83,7 +87,6 @@ const LocationMarker = () => {
               >
                 Delete
               </Button>
-              {/* {marker.lat + "," + marker.lng} */}
             </Popup>
           </Marker>
         )

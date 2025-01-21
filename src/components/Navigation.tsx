@@ -14,16 +14,20 @@ import {
 import { FeatureCollection, Position } from "geojson";
 import { center } from "./Maps";
 import MarkerTable from "./MarkerTable";
+import { MarkerData } from "@/hooks/useMarkers";
 
 const Navigation = () => {
-  const { showMarker, selectedMarker, setShowMarker, setSelectedMarker } =
-    useMarkerStore();
-  const { mapInstance } = useMapStore();
-  const { position, setPosition } = usePositionStore();
+  const showMarker = useMarkerStore((s) => s.showMarker);
+  const selectedMarker = useMarkerStore((s) => s.selectedMarker);
+  const setShowMarker = useMarkerStore((s) => s.setShowMarker);
+  const setSelectedMarker = useMarkerStore((s) => s.setSelectedMarker);
+  const mapInstance = useMapStore((s) => s.mapInstance);
+  // const position = usePositionStore((s) => s.position);
+  // const setPosition = usePositionStore((s) => s.setPosition);
 
-  mapInstance?.on({
-    move: () => setPosition(mapInstance?.getCenter()),
-  });
+  // mapInstance?.on({
+  //   moveend: () => setPosition(mapInstance?.getCenter()),
+  // });
 
   const addMarker = useAddMarker();
   const updateMarker = useUpdateMarker();
@@ -42,8 +46,12 @@ const Navigation = () => {
   const queryClient = useQueryClient();
 
   const isMarkerInsideGeoJSON = () => {
+    const markerPosition = mapInstance?.getCenter();
     const data = queryClient.getQueryData<FeatureCollection>(["maps"]);
-    const mark = point([position?.lng as number, position?.lat as number]);
+    const mark = point([
+      markerPosition?.lng as number,
+      markerPosition?.lat as number,
+    ]);
     if (!data) return null;
     for (const feature of data.features) {
       if (feature.geometry.type === "Polygon") {
@@ -51,16 +59,16 @@ const Navigation = () => {
         if (booleanPointInPolygon(mark, poly)) {
           if (selectedMarker === 0) {
             addMarker.mutate({
-              lat: position?.lat as number,
-              lng: position?.lng as number,
+              lat: markerPosition?.lat as number,
+              lng: markerPosition?.lng as number,
               parentId: feature.id as number,
             });
           } else {
             updateMarker.mutate({
               id: selectedMarker,
               markerData: {
-                lat: position?.lat as number,
-                lng: position?.lng as number,
+                lat: markerPosition?.lat as number,
+                lng: markerPosition?.lng as number,
               },
             });
           }
@@ -73,16 +81,16 @@ const Navigation = () => {
         if (booleanPointInPolygon(mark, poly)) {
           if (selectedMarker === 0) {
             addMarker.mutate({
-              lat: position?.lat as number,
-              lng: position?.lng as number,
+              lat: markerPosition?.lat as number,
+              lng: markerPosition?.lng as number,
               parentId: feature.id as number,
             });
           } else {
             updateMarker.mutate({
               id: selectedMarker,
               markerData: {
-                lat: position?.lat as number,
-                lng: position?.lng as number,
+                lat: markerPosition?.lat as number,
+                lng: markerPosition?.lng as number,
               },
             });
           }
