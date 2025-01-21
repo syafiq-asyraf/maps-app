@@ -1,8 +1,8 @@
 import { MarkerData } from "@/hooks/useMarkers";
-import useDensityStore from "@/store";
+import useDescriptionStore from "@/stores/descriptionStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { Feature, FeatureCollection } from "geojson";
-import { Layer, LeafletEvent, LeafletMouseEvent, marker, Path } from "leaflet";
+import { Layer, LeafletEvent, LeafletMouseEvent, Path } from "leaflet";
 import { GeoJSON, useMap } from "react-leaflet";
 
 interface Props {
@@ -12,7 +12,7 @@ interface Props {
 
 const HeatMap = ({ data, dataUpdatedAt }: Props) => {
   const map = useMap();
-  const { reset, setState, setMarkerCount } = useDensityStore();
+  const { reset, setState, setMarkerCount } = useDescriptionStore();
 
   const getColor = (d: number) => {
     return d > 50

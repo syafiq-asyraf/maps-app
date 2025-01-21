@@ -3,6 +3,7 @@ import Description from "./components/Description";
 import Maps from "./components/Maps";
 // import './App.css'
 import "leaflet/dist/leaflet.css";
+import Layout from "./components/Layout";
 
 function App() {
   // const { setData } = useDataStore();
@@ -15,14 +16,11 @@ function App() {
 
   return (
     <>
-      <Box position={"fixed"} zIndex={"max"} padding={3} right={0}>
+      {/* <Box position={"fixed"} zIndex={"max"} padding={3} right={0}>
         <Description />
       </Box>
-      {/* <Description /> */}
-      {/* <Maps /> */}
-      {/* <Box position={"relative"} height={"400px"} width={"400px"} margin={10}> */}
-      <Maps />
-      {/* </Box> */}
+      <Maps /> */}
+      <Layout />
     </>
   );
 }

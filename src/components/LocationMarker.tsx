@@ -1,59 +1,34 @@
-import useMarkers, { MarkerData } from "@/hooks/useMarkers";
-import { Box, Button, Image, Link, Text } from "@chakra-ui/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  booleanPointInPolygon,
-  multiPolygon,
-  point,
-  polygon,
-} from "@turf/turf";
-import axios from "axios";
-import { FeatureCollection, Position } from "geojson";
-import { icon, latLng, LatLngExpression } from "leaflet";
-import { useState } from "react";
-import { Marker, Popup, useMap } from "react-leaflet";
-import redMarker from "../assets/marker-red.webp";
-import greenMarker from "../assets/marker-green.webp";
-import useAddMarker from "@/hooks/useAddMarker";
-import useUpdateMarker from "@/hooks/useUpdateMarker";
 import useDeleteMarker from "@/hooks/useDeleteMarker";
+import useMarkers from "@/hooks/useMarkers";
+import useMapStore from "@/stores/mapStore";
+import useMarkerStore from "@/stores/markerStore";
+import { Box, Button, Image } from "@chakra-ui/react";
+import { icon, latLng, LatLngExpression } from "leaflet";
+import { useEffect } from "react";
+import { Marker, Popup, useMap } from "react-leaflet";
+import greenMarker from "../assets/marker-green.webp";
+import redMarker from "../assets/marker-red.webp";
 
-interface Props {
-  data: FeatureCollection;
-  center: LatLngExpression;
-}
-
-const LocationMarker = ({ data, center }: Props) => {
+const LocationMarker = () => {
   const map = useMap();
-  // const [markers, setMarker] = useState<{
-  //   data: { position: [number, number] }[];
-  // }>({
-  //   data: [],
-  // });
 
-  const [position, setPosition] = useState(map.getCenter());
-  const [isShow, setShow] = useState(false);
-  // const [isEdit, setEdit] = useState(false);
-  const [selected, setSelected] = useState(0);
+  const { mapInstance, setMapInstance } = useMapStore();
+
+  useEffect(() => {
+    setMapInstance(map);
+  }, [mapInstance, setMapInstance]);
+
+  const { showMarker, selectedMarker, setShowMarker, setSelectedMarker } =
+    useMarkerStore();
 
   const { data: markers } = useMarkers();
 
-  const addMarker = useAddMarker();
-
-  const updateMarker = useUpdateMarker();
-
   const deleteMarker = useDeleteMarker();
 
-  map.on({
-    move: () => setPosition(map.getCenter()),
-  });
-
   const toggleEdit = (coordinate: LatLngExpression, id: number) => {
-    // setEdit(true);
-    // map.closePopup();
     const onMoveEnd = () => {
-      setSelected(id);
-      setShow(true);
+      setSelectedMarker(id);
+      setShowMarker(true);
       map.closePopup();
       map.off("moveend", onMoveEnd);
     };
@@ -61,18 +36,6 @@ const LocationMarker = ({ data, center }: Props) => {
       moveend: onMoveEnd,
     });
     map.flyTo(coordinate);
-    // setShow(true);
-  };
-
-  const handleTag = () => {
-    isMarkerInsideGeoJSON();
-    setShow(false);
-    setSelected(0);
-  };
-
-  const handleCancel = () => {
-    setShow(false);
-    setSelected(0);
   };
 
   const handleDelete = (id: number) => {
@@ -80,63 +43,10 @@ const LocationMarker = ({ data, center }: Props) => {
     deleteMarker.mutate(id);
   };
 
-  const isMarkerInsideGeoJSON = () => {
-    const mark = point([position.lng, position.lat]);
-
-    // console.log(data);
-    if (!data) return null;
-    for (const feature of data.features) {
-      if (feature.geometry.type === "Polygon") {
-        const poly = polygon(feature.geometry.coordinates as Position[][]);
-        if (booleanPointInPolygon(mark, poly)) {
-          if (selected === 0) {
-            addMarker.mutate({
-              lat: position.lat,
-              lng: position.lng,
-              parentId: feature.id as number,
-            });
-          } else {
-            updateMarker.mutate({
-              id: selected as number,
-              markerData: {
-                lat: position.lat,
-                lng: position.lng,
-              },
-            });
-          }
-          return;
-        }
-      } else if (feature.geometry.type === "MultiPolygon") {
-        const poly = multiPolygon(
-          feature.geometry.coordinates as Position[][][]
-        );
-        if (booleanPointInPolygon(mark, poly)) {
-          if (selected === 0) {
-            addMarker.mutate({
-              lat: position.lat,
-              lng: position.lng,
-              parentId: feature.id as number,
-            });
-          } else {
-            updateMarker.mutate({
-              id: selected as number,
-              markerData: {
-                lat: position.lat,
-                lng: position.lng,
-              },
-            });
-          }
-          return;
-        }
-      }
-    }
-    return null;
-  };
-
   return (
     <>
       {markers?.map((marker, index) =>
-        marker.id === selected ? (
+        marker.id === selectedMarker ? (
           ""
         ) : (
           <Marker
@@ -150,8 +60,8 @@ const LocationMarker = ({ data, center }: Props) => {
             })}
             eventHandlers={{
               click: () => {
-                setShow(false);
-                setSelected(0);
+                setShowMarker(false);
+                setSelectedMarker(0);
               },
             }}
           >
@@ -178,50 +88,7 @@ const LocationMarker = ({ data, center }: Props) => {
           </Marker>
         )
       )}
-      <Box
-        backgroundColor={"grey"}
-        padding={2}
-        zIndex={"max"}
-        position={"absolute"}
-        justifyItems={"center"}
-        alignItems={"center"}
-        left={"50%"}
-        transform={"translate(-50%)"}
-      >
-        <Text>
-          {position.lat}, {position.lng}
-        </Text>
-        {isShow ? (
-          <>
-            <Button colorPalette={"blue"} onClick={handleTag}>
-              Tag
-            </Button>
-            <Button colorPalette={"red"} onClick={handleCancel} marginLeft={2}>
-              Cancel
-            </Button>
-          </>
-        ) : (
-          <Button
-            // bgColor={"blue"}
-            colorPalette={"blue"}
-            onClick={() => {
-              setShow(true);
-            }}
-          >
-            Show Marker
-          </Button>
-        )}
-        <Button
-          colorPalette={"grey"}
-          onClick={() => {
-            map.flyTo(center);
-          }}
-          marginLeft={2}
-        >
-          Center
-        </Button>
-      </Box>
-      {isShow && (
+      {showMarker && (
         <Box
           position={"absolute"}
           top={"50%"}

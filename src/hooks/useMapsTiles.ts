@@ -4,7 +4,7 @@ import { FeatureCollection } from "geojson";
 
 const apiClient = new APIClient<FeatureCollection>("/geodata");
 
-const useMaps = () => {
+const useMapsTiles = () => {
   return useQuery({
     queryKey: ["maps"],
     queryFn: apiClient.getAll,
@@ -12,4 +12,4 @@ const useMaps = () => {
   });
 };
 
-export default useMaps;
+export default useMapsTiles;

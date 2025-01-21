@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-interface DensityStore {
+interface DescriptionStore {
   state: string | null;
   markerCount: number | null;
   setState: (state: string) => void;
@@ -8,7 +8,7 @@ interface DensityStore {
   reset: () => void;
 }
 
-const useDensityStore = create<DensityStore>((set) => ({
+const useDescriptionStore = create<DescriptionStore>((set) => ({
   state: null,
   markerCount: null,
   setState: (state) => set(() => ({ state: state })),
@@ -16,4 +16,4 @@ const useDensityStore = create<DensityStore>((set) => ({
   reset: () => set(() => ({ state: null, markerCount: null })),
 }));
 
-export default useDensityStore;
+export default useDescriptionStore;

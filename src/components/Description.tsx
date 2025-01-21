@@ -1,8 +1,8 @@
-import useDensityStore from "@/store";
+import useDescriptionStore from "@/stores/descriptionStore";
 import { Box, Text } from "@chakra-ui/react";
 
 const Description = () => {
-  const { state, density, markerCount } = useDensityStore();
+  const { state, markerCount } = useDescriptionStore();
 
   return (
     <Box
@@ -19,13 +19,6 @@ const Description = () => {
       {state ? (
         <Text fontWeight={"bold"} color={"black"}>
           {state}
-        </Text>
-      ) : (
-        ""
-      )}
-      {density ? (
-        <Text color={"black"}>
-          {density} people/mi<sup>2</sup>
         </Text>
       ) : (
         ""
