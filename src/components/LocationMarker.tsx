@@ -9,6 +9,7 @@ import { useEffect } from "react";
 import { Marker, Popup, useMap } from "react-leaflet";
 import greenMarker from "../assets/marker-green.webp";
 import redMarker from "../assets/marker-red.webp";
+import useMarkerQueryStore from "@/stores/markerQueryStore";
 
 const LocationMarker = () => {
   const map = useMap();
@@ -19,8 +20,13 @@ const LocationMarker = () => {
     setMapInstance(map);
   }, [mapInstance, setMapInstance]);
 
+  const markerQuery = useMarkerQueryStore((s) => s.markerQuery);
+
   const queryClient = useQueryClient();
-  const markers = queryClient.getQueryData<MarkerData[]>(["markers"]);
+  const markers = queryClient.getQueryData<MarkerData[]>([
+    "markers",
+    markerQuery,
+  ]);
 
   const showMarker = useMarkerStore((s) => s.showMarker);
   const selectedMarker = useMarkerStore((s) => s.selectedMarker);

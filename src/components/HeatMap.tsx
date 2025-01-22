@@ -1,5 +1,6 @@
 import { MarkerData } from "@/hooks/useMarkers";
 import useDescriptionStore from "@/stores/descriptionStore";
+import useMarkerQueryStore from "@/stores/markerQueryStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { Feature, FeatureCollection } from "geojson";
 import { Layer, LeafletEvent, LeafletMouseEvent, Path } from "leaflet";
@@ -52,8 +53,11 @@ const HeatMap = ({ data, dataUpdatedAt }: Props) => {
 
   const queryClient = useQueryClient();
 
+  const markerQuery = useMarkerQueryStore((s) => s.markerQuery);
+
   const getMarkerCount = (id: number) => {
-    const markers = queryClient.getQueryData<MarkerData[]>(["markers"]) || [];
+    const markers =
+      queryClient.getQueryData<MarkerData[]>(["markers", markerQuery]) || [];
     const markerCount = markers.reduce((acc, marker) => {
       return (marker.parentId as number) === id ? acc + 1 : acc;
     }, 0);

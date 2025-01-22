@@ -19,7 +19,7 @@ const Layout = () => {
         </Box>
         <Maps />
       </GridItem>
-      <GridItem area="aside" backgroundColor={"gray.800"}>
+      <GridItem area="aside" backgroundColor={"gray.900"}>
         <Navigation />
       </GridItem>
     </Grid>

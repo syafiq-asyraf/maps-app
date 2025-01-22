@@ -15,6 +15,7 @@ import { FeatureCollection, Position } from "geojson";
 import { center } from "./Maps";
 import MarkerTable from "./MarkerTable";
 import { MarkerData } from "@/hooks/useMarkers";
+import StateSelector from "./StateSelector";
 
 const Navigation = () => {
   const showMarker = useMarkerStore((s) => s.showMarker);
@@ -149,6 +150,9 @@ const Navigation = () => {
             Show Marker
           </Button>
         )}
+        <Box width={"100%"}>
+          <StateSelector />
+        </Box>
         <Box flex={1} width={"100%"} overflow="hidden">
           <MarkerTable />
         </Box>

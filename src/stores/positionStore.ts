@@ -1,7 +1,5 @@
 import { LatLng } from "leaflet";
 import { create } from "zustand";
-import useMapStore from "./mapStore";
-import { center } from "@/components/Maps";
 
 interface PositionStore {
   position: LatLng | null;
