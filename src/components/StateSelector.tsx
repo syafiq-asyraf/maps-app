@@ -1,21 +1,15 @@
+import useMapsTiles from "@/hooks/useMapsTiles";
 import useMarkerQueryStore from "@/stores/markerQueryStore";
-import { Button, Text } from "@chakra-ui/react";
-import { useQueryClient } from "@tanstack/react-query";
+import { Box, Button, HStack } from "@chakra-ui/react";
 import { BsChevronDown } from "react-icons/bs";
-import React from "react";
-import {
-  MenuArrow,
-  MenuContent,
-  MenuItem,
-  MenuRoot,
-  MenuTrigger,
-} from "./ui/menu";
+import { MenuContent, MenuItem, MenuRoot, MenuTrigger } from "./ui/menu";
 
 const StateSelector = () => {
   const parentId = useMarkerQueryStore((s) => s.markerQuery.parentId);
   const setParentId = useMarkerQueryStore((s) => s.setParentId);
-  const queryClient = useQueryClient();
-  const markers = queryClient.getQueryData(["maps"]);
+  const resetParentId = useMarkerQueryStore((s) => s.resetMarkerQuery);
+  const { data: mapTiles } = useMapsTiles();
+  const selectedState = mapTiles?.features.find((p) => p.id === parentId);
   return (
     <MenuRoot>
       <MenuTrigger asChild width={"100%"}>
@@ -26,15 +20,27 @@ const StateSelector = () => {
           justifyContent={"left"}
           rounded={10}
         >
-          Open
+          <HStack>
+            <Box>{selectedState?.properties?.name || "All State"}</Box>
+            <Box position={"absolute"} right={0} marginRight={3}>
+              <BsChevronDown />
+            </Box>
+          </HStack>
         </Button>
       </MenuTrigger>
-      <MenuContent>
-        <MenuItem value="new-txt">New Text File</MenuItem>
-        <MenuItem value="new-file">New File...</MenuItem>
-        <MenuItem value="new-win">New Window</MenuItem>
-        <MenuItem value="open-file">Open File...</MenuItem>
-        <MenuItem value="export">Export</MenuItem>
+      <MenuContent width={"476px"} backgroundColor={"gray.700"}>
+        <MenuItem value="All State" onClick={() => resetParentId()}>
+          All State
+        </MenuItem>
+        {mapTiles?.features.map((feature) => (
+          <MenuItem
+            key={feature.id}
+            value={feature.id as string}
+            onClick={() => setParentId(feature.id as number)}
+          >
+            {feature.properties?.name}
+          </MenuItem>
+        ))}
       </MenuContent>
     </MenuRoot>
   );

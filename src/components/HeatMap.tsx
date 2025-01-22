@@ -87,7 +87,6 @@ const HeatMap = ({ data, dataUpdatedAt }: Props) => {
         e.target.setStyle(originalStyle);
       },
       click: (e: LeafletEvent) => {
-        // console.log(data);
         map.fitBounds(e.target.getBounds());
       },
     });
